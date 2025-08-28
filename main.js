@@ -19,6 +19,7 @@ class WebGLShaderDemo {
     
     this.program = this.createProgram(vertexShaderSource, fragmentShaderSource)
     this.setupBuffers()
+    this.loadTexture()
     
     this.startTime = Date.now()
     this.animate()
@@ -81,6 +82,38 @@ class WebGLShaderDemo {
     
     this.resolutionLocation = this.gl.getUniformLocation(this.program, 'u_resolution')
     this.timeLocation = this.gl.getUniformLocation(this.program, 'u_time')
+    this.textureLocation = this.gl.getUniformLocation(this.program, 'u_texture')
+  }
+  
+  loadTexture() {
+    const texture = this.gl.createTexture()
+    this.gl.bindTexture(this.gl.TEXTURE_2D, texture)
+    
+    // 一時的な1x1ピクセルのテクスチャで初期化（赤色で見やすく）
+    this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, 1, 1, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, new Uint8Array([255, 0, 0, 255]))
+    
+    const image = new Image()
+    image.crossOrigin = 'anonymous'
+    image.onload = () => {
+      console.log('Image loaded successfully:', image.width, 'x', image.height)
+      this.gl.bindTexture(this.gl.TEXTURE_2D, texture)
+      this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, image)
+      
+      // テクスチャパラメータを設定
+      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE)
+      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE)
+      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR)
+      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR)
+      
+      console.log('Texture setup complete')
+    }
+    image.onerror = () => {
+      console.error('Failed to load image: scream.png')
+      console.log('Make sure scream.png is in the public directory')
+    }
+    image.src = './img/scream.png'
+    
+    this.texture = texture
   }
   
   
@@ -92,6 +125,10 @@ class WebGLShaderDemo {
     
     this.gl.uniform2f(this.resolutionLocation, this.canvas.width, this.canvas.height)
     this.gl.uniform1f(this.timeLocation, currentTime)
+    this.gl.uniform1i(this.textureLocation, 0)
+    
+    this.gl.activeTexture(this.gl.TEXTURE0)
+    this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture)
     
     this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4)
     
