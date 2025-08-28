@@ -7,6 +7,7 @@ uniform sampler2D u_texture;
 void main() {
   vec2 I = gl_FragCoord.xy;
   vec2 uv = I / u_resolution.xy;
+  uv.y = 1.0 - uv.y; // Y軸を反転
   
   // まずはテクスチャをそのまま表示
   vec4 texColor = texture2D(u_texture, uv);
@@ -38,8 +39,9 @@ void main() {
   // 歪んだテクスチャを取得
   vec4 distortedTexColor = texture2D(u_texture, distortedUV);
   
-  // シンプルなブレンディング
-  vec3 pattern = abs(O.rgb) * 0.3;
+  // シンプルなブレンディング - 緑を強く
+  vec3 pattern = abs(O.rgb) * 0.7;
+  pattern = pattern * vec3(0.0, .5, 0.0);
   vec3 finalColor = distortedTexColor.rgb + pattern;
   
   gl_FragColor = vec4(finalColor, 1.0);
